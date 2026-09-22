@@ -1,23 +1,36 @@
 // app/index.tsx
 import { useEffect, useState } from "react";
 import { View } from "react-native";
-// Catatan: gunakan ../components/ jika file berada di dalam folder app/
-// yang sejajar dengan folder components/
-import RiwayatList from "../components/RiwayatList";
-import SearchBox from "../components/SearchBox";
-import WeatherCard from "../components/WeatherCard";
+
+// Components
+import IndikatorAQI from "../../components/IndikatorAQI";
+import RiwayatList from "../../components/RiwayatList";
+import SearchBox from "../../components/SearchBox";
+import WeatherCard from "../../components/WeatherCard";
+
+// Type
+import { LaporanUdara } from "../../types/cuaca";
 
 export default function HalamanUtama() {
   const [kotaAktif, setKotaAktif] = useState("Pekalongan");
   const [riwayat, setRiwayat] = useState<string[]>(["Pekalongan"]);
 
-  // Tambahkan useEffect untuk mencatat perubahan kota aktif
+  // Data laporan udara
+  const laporan: LaporanUdara = {
+    kota: kotaAktif,
+    indeksAQI: 75,
+    tingkat: "SEDANG",
+    diperbaruiPada: "19 September 2026",
+  };
+
+  // Mencatat perubahan kota aktif
   useEffect(() => {
     console.log("Kota aktif berubah menjadi:", kotaAktif);
   }, [kotaAktif]);
 
   function handleCari(kota: string) {
     setKotaAktif(kota);
+
     if (!riwayat.includes(kota)) {
       setRiwayat([...riwayat, kota]);
     }
@@ -26,7 +39,11 @@ export default function HalamanUtama() {
   return (
     <View style={{ padding: 16, gap: 16 }}>
       <SearchBox onCari={handleCari} />
+
       <WeatherCard kota={kotaAktif} suhu={29} tingkatAQI="BAIK" />
+
+      <IndikatorAQI data={laporan} />
+
       <RiwayatList daftarKota={riwayat} />
     </View>
   );
