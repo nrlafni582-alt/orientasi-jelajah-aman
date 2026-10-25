@@ -54,3 +54,29 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+# Jelajah Aman
+
+Aplikasi cuaca dan kualitas udara berbasis Expo (React Native) dengan pencarian kota, lokasi saat ini, favorit, dan mode offline berbasis SQLite.
+
+## Menjalankan Aplikasi
+
+1. Pasang dependensi
+
+   ```bash
+   npm install
+   ```
+
+2. Jalankan aplikasi
+
+   ```bash
+   npx expo start
+   ```
+
+## Status Data
+
+Cache-segar adalah data cuaca tersimpan yang umurnya kurang dari 30 menit, sehingga aplikasi langsung memakainya tanpa memanggil internet. Cache-basi adalah data tersimpan yang umurnya sudah 30 menit atau lebih, tetapi tetap ditampilkan karena internet gagal diakses, jadi angkanya mungkin sudah tidak akurat. First-run offline terjadi saat tidak ada internet dan belum ada data tersimpan sama sekali, sehingga aplikasi hanya bisa menampilkan pesan error dengan tombol Coba Lagi. Label status data penting agar pengguna tahu apakah suhu dan kualitas udara yang tampil itu terkini atau salinan lama, karena keputusan seperti keluar rumah bisa bergantung pada informasi tersebut.
+
+## Sumber Data
+
+Data cuaca disediakan oleh Open-Meteo.com.
