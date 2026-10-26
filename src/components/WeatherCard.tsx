@@ -1,6 +1,7 @@
 // src/components/WeatherCard.tsx
 import { Text, View } from "react-native";
 import { spacing, typeScale } from "../constants/styles";
+import { useTheme } from "../hooks/use-theme";
 import { TingkatAQI, WeatherCardProps } from "../types/cuaca";
 const warnaPerTingkat: Record<TingkatAQI, string> = {
   BAIK: "green",
@@ -14,6 +15,7 @@ export default function WeatherCard({
   tingkatAQI,
   indeksAQI,
 }: WeatherCardProps) {
+  const colors = useTheme();
   const teksAQI =
     indeksAQI !== undefined
       ? `AQI: ${indeksAQI} (${tingkatAQI})`
@@ -30,13 +32,19 @@ ${tingkatAQI}`
       style={{
         padding: spacing.sedang,
         borderRadius: 8,
-        backgroundColor: "#F4F7FA",
+        backgroundColor: colors.card,
       }}
     >
-      <Text style={{ fontWeight: "bold", fontSize: typeScale.judul }}>
+      <Text
+        style={{
+          fontWeight: "bold",
+          fontSize: typeScale.judul,
+          color: colors.text,
+        }}
+      >
         {kota}
       </Text>
-      <Text style={{ fontSize: 32 }}>{suhu}°C</Text>
+      <Text style={{ fontSize: 32, color: colors.text }}>{suhu}°C</Text>
       <Text
         style={{ color: warnaPerTingkat[tingkatAQI], fontSize: typeScale.isi }}
       >

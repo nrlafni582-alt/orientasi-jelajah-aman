@@ -1,7 +1,7 @@
 import {
-    DataTersimpan,
-    KotaUntukCache,
-    RingkasanKotaTersimpan,
+  DataTersimpan,
+  KotaUntukCache,
+  RingkasanKotaTersimpan,
 } from "../types/cache";
 import { DataCuacaLengkap, DataKualitasUdara } from "../types/weather";
 
@@ -107,6 +107,12 @@ export async function daftarKotaTersimpan(): Promise<RingkasanKotaTersimpan[]> {
       longitude: baris.longitude,
       disimpanPada: baris.disimpan_pada,
     }));
+}
+
+export async function hapusKotaTersimpan(kunci: string): Promise<void> {
+  const semua = bacaSemuaCache();
+  delete semua[kunci];
+  simpanSemuaCache(semua);
 }
 
 export async function bersihkanCacheLama(batasUmurMs: number): Promise<void> {
