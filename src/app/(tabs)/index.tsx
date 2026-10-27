@@ -1,6 +1,6 @@
 // src/app/(tabs)/index.tsx
 import { router, useLocalSearchParams } from "expo-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   ActivityIndicator,
@@ -41,7 +41,11 @@ import { Ionicons } from "@expo/vector-icons";
 
 export default function HalamanUtama() {
   const colors = useTheme();
-  const { q, t } = useLocalSearchParams<{ q?: string; t?: string }>();
+  const { q, t, dariRiwayat } = useLocalSearchParams<{
+    q?: string;
+    t?: string;
+    dariRiwayat?: string;
+  }>();
   const [teksCari, setTeksCari] = useState("");
   const [hasilPencarian, setHasilPencarian] = useState<HasilGeocoding[]>([]);
   const [kotaTerpilih, setKotaTerpilih] = useState<HasilGeocoding | null>(null);
@@ -52,36 +56,29 @@ export default function HalamanUtama() {
   const [sedangMemuat, setSedangMemuat] = useState(false);
   const [pesanError, setPesanError] = useState<string | null>(null);
   const [pesanRiwayat, setPesanRiwayat] = useState<string | null>(null);
+  const [pesanPencarian, setPesanPencarian] = useState<string | null>(null);
   const [pesanLokasi, setPesanLokasi] = useState<string | null>(null);
+  const searchRequestRef = useRef(0);
   const teksPencarian = q ?? teksCari;
   const parameterPencarian = useMemo(
-    () => ({ query: teksPencarian, token: t }),
-    [teksPencarian, t],
+    () => ({ query: teksPencarian, token: t, dariRiwayat }),
+    [teksPencarian, t, dariRiwayat],
   );
   const teksTertunda = useDebounce(parameterPencarian, 500);
   const requestIdRef = useRef(0); // pencegah race condition
-  async function muatKotaTersimpan() {
+  const muatKotaTersimpan = useCallback(async () => {
     setKotaTersimpan(await daftarKotaTersimpan());
-  }
+  }, []);
   // Saat aplikasi dibuka: buang cache > 7 hari, lalu tampilkan daftar tersimpan
   useEffect(() => {
     bersihkanCacheLama(BATAS_CACHE_MS)
       .then(muatKotaTersimpan)
       .catch(() => {});
-  }, []);
-  useEffect(() => {
-    if (q) setTeksCari(q);
-  }, [q, t]);
-  useEffect(() => {
-    if (teksTertunda.query.trim().length === 0) {
-      setHasilPencarian([]);
-      return;
-    }
-    cariKota(teksTertunda.query)
-      .then(setHasilPencarian)
-      .catch(() => setHasilPencarian([]));
-  }, [teksTertunda]);
-  async function pilihKota(kota: HasilGeocoding, paksaPerbarui = false) {
+  }, [muatKotaTersimpan]);
+  const pilihKota = useCallback(async (
+    kota: HasilGeocoding,
+    paksaPerbarui = false,
+  ) => {
     setKotaTerpilih(kota);
     const idSaatIni = ++requestIdRef.current;
     setSedangMemuat(true);
@@ -107,7 +104,7 @@ export default function HalamanUtama() {
         }
       }
       muatKotaTersimpan();
-    } catch (err) {
+    } catch {
       if (idSaatIni !== requestIdRef.current) return;
       setHasil(null);
       setPesanError(
@@ -116,7 +113,39 @@ export default function HalamanUtama() {
     } finally {
       if (idSaatIni === requestIdRef.current) setSedangMemuat(false);
     }
-  }
+  }, [muatKotaTersimpan]);
+  useEffect(() => {
+    if (teksTertunda.query.trim().length === 0) {
+      searchRequestRef.current += 1;
+      return;
+    }
+    const requestId = ++searchRequestRef.current;
+    const pilihDariRiwayat = teksTertunda.dariRiwayat === "riwayat";
+    cariKota(teksTertunda.query)
+      .then((kotaDitemukan) => {
+        if (requestId !== searchRequestRef.current) return;
+        setPesanPencarian(null);
+        setHasilPencarian(kotaDitemukan);
+        if (pilihDariRiwayat) {
+          const namaDicari = teksTertunda.query.trim().toLocaleLowerCase();
+          const kota = kotaDitemukan.find(
+            (item) => item.name.trim().toLocaleLowerCase() === namaDicari,
+          ) ?? kotaDitemukan[0];
+          if (kota) {
+            void pilihKota(kota);
+          } else {
+            setPesanPencarian("Kota dari riwayat tidak ditemukan.");
+          }
+        }
+      })
+      .catch(() => {
+        if (requestId !== searchRequestRef.current) return;
+        setHasilPencarian([]);
+        setPesanPencarian(
+          "Pencarian kota gagal dimuat. Periksa koneksi internet.",
+        );
+      });
+  }, [teksTertunda, pilihKota]);
   async function hapusCacheKota(kota: RingkasanKotaTersimpan) {
     try {
       await hapusKotaTersimpan(kota.kunci);
@@ -175,10 +204,24 @@ export default function HalamanUtama() {
         <SearchBox
           value={teksPencarian}
           onCari={(teks) => {
+            searchRequestRef.current += 1;
             setTeksCari(teks);
-            if (q) router.setParams({ q: undefined, t: undefined });
+            setHasilPencarian([]);
+            setPesanPencarian(null);
+            if (q || dariRiwayat) {
+              router.setParams({
+                q: undefined,
+                t: undefined,
+                dariRiwayat: undefined,
+              });
+            }
           }}
         />
+        {pesanPencarian && (
+          <Text style={{ color: colors.danger }} accessibilityLabel={pesanPencarian}>
+            {pesanPencarian}
+          </Text>
+        )}
         {pesanRiwayat && (
           <Text style={{ color: colors.danger }} accessibilityLabel={pesanRiwayat}>
             {pesanRiwayat}

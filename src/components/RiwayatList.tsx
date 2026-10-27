@@ -16,7 +16,11 @@ export default function RiwayatList({ daftarKota }: RiwayatListProps) {
           onPress={() =>
             router.push({
               pathname: "/",
-              params: { q: kota, t: String(Date.now()) },
+              params: {
+                q: kota,
+                t: String(Date.now()),
+                dariRiwayat: "riwayat",
+              },
             })
           }
           accessibilityRole="button"
